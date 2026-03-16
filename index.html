@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maison Maire - Hub</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/theme.js"></script>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="logo">Maison Maire</div>
+        <p class="subtitle" data-i18n="hub.subtitle">Hub de services & projets</p>
+
+        <div class="header-controls">
+            <script>document.write(buildLangSelector())</script>
+            <div class="theme-toggle" id="theme-toggle">
+                <button class="theme-btn" data-theme="light" onclick="setThemePref('light')" title="Clair" data-i18n-title="theme.light">
+                    <i data-lucide="sun" style="width:15px;height:15px"></i>
+                </button>
+                <button class="theme-btn" data-theme="system" onclick="setThemePref('system')" title="Système" data-i18n-title="theme.system">
+                    <i data-lucide="monitor" style="width:15px;height:15px"></i>
+                </button>
+                <button class="theme-btn" data-theme="dark" onclick="setThemePref('dark')" title="Sombre" data-i18n-title="theme.dark">
+                    <i data-lucide="moon" style="width:15px;height:15px"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="search-bar">
+            <span class="search-icon"><i data-lucide="search" style="width:16px;height:16px"></i></span>
+            <input type="text" id="search" placeholder="Rechercher un service..." data-i18n-placeholder="hub.search_placeholder" autocomplete="off">
+        </div>
+    </header>
+
+    <!-- Category pills -->
+    <div class="categories" id="categories"></div>
+
+    <!-- Service grid -->
+    <div class="grid" id="grid">
+        <div class="empty-state" id="empty" data-i18n="hub.empty">Aucun service trouvé.</div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Modal (unused on public page but kept for render.js compat) -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="modal-content"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer>Maison Maire &copy; 2026</footer>
+
+    <!-- Scripts -->
+    <script src="js/icons.js"></script>
+    <script src="js/services.js"></script>
+    <script src="js/render.js"></script>
+    <script src="js/app.js"></script>
+    <script>translatePage(); translatePlaceholders();</script>
+</body>
+</html>
