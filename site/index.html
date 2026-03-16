@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MaisonMaire - Your Self-Hosted Service Hub</title>
+  <meta name="description" content="A modern, self-hosted dashboard to centralize all your services and projects in one place. Zero dependencies, pure HTML/CSS/JS.">
+  <meta name="theme-color" content="#0a0a1a">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
+  <style>
+    /* ── Reset & Base ───────────────────────────────────────────── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --accent: #5c5cff;
+      --accent-light: #7b7bff;
+      --accent-glow: rgba(92, 92, 255, 0.35);
+      --bg-deep: #06060f;
+      --bg-primary: #0a0a1a;
+      --bg-card: rgba(255, 255, 255, 0.04);
+      --bg-card-hover: rgba(255, 255, 255, 0.07);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(92, 92, 255, 0.3);
+      --text: #e8e8f0;
+      --text-dim: #8888a0;
+      --text-muted: #55556a;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg-deep);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Scroll Animations ──────────────────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+    .reveal-delay-5 { transition-delay: 0.5s; }
+
+    /* ── Layout ─────────────────────────────────────────────────── */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    section {
+      padding: 100px 0;
+      position: relative;
+    }
+
+    /* ── Background Effects ─────────────────────────────────────── */
+    .bg-glow {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Navbar ──────────────────────────────────────────────────── */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 16px 0;
+      background: rgba(6, 6, 15, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      transition: all 0.3s ease;
+    }
+
+    .navbar .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-brand .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s;
+      position: relative;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--accent);
+      border-radius: 1px;
+      transition: width 0.3s ease;
+    }
+
+    .nav-links a:hover::after { width: 100%; }
+
+    .nav-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      background: var(--accent);
+      color: white !important;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .nav-cta:hover {
+      background: var(--accent-light) !important;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+
+    .nav-cta::after { display: none !important; }
+
+    .mobile-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      padding: 8px;
+    }
+
+    /* ── Hero ────────────────────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding-top: 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero .bg-glow.glow-1 {
+      width: 600px; height: 600px;
+      background: var(--accent);
+      opacity: 0.08;
+      top: -100px; right: -100px;
+    }
+
+    .hero .bg-glow.glow-2 {
+      width: 400px; height: 400px;
+      background: #8b5cf6;
+      opacity: 0.06;
+      bottom: -50px; left: -100px;
+    }
+
+    .hero-content {
+      text-align: center;
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px 6px 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      margin-bottom: 32px;
+    }
+
+    .hero-badge .badge-dot {
+      width: 8px; height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: pulse-dot 2s ease infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+      50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+    }
+
+    .hero h1 {
+      font-size: clamp(3rem, 7vw, 5rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 .gradient-text {
+      background: linear-gradient(135deg, var(--accent) 0%, #8b5cf6 50%, var(--accent-light) 100%);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradient-shift 4s ease infinite;
+    }
+
+    @keyframes gradient-shift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .hero p {
+      font-size: clamp(1.1rem, 2vw, 1.3rem);
+      color: var(--text-dim);
+      max-width: 600px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
+    }
+
+    .hero-buttons {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 4px 24px var(--accent-glow);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-light);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px var(--accent-glow);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
+
+    .hero-stats {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 48px;
+      margin-top: 64px;
+      padding-top: 40px;
+      border-top: 1px solid var(--border);
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ── Section Headings ───────────────────────────────────────── */
+    .section-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 16px;
+    }
+
+    .section-header h2 {
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+    }
+
+    .section-header p {
+      font-size: 1.1rem;
+      color: var(--text-dim);
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    /* ── Features ────────────────────────────────────────────────── */
+    .features {
+      background: var(--bg-primary);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .feature-card {
+      padding: 32px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: all 0.35s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+
+    .feature-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-hover);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      background: rgba(92, 92, 255, 0.1);
+      color: var(--accent);
+    }
+
+    .feature-card:nth-child(2) .feature-icon { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+    .feature-card:nth-child(3) .feature-icon { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+    .feature-card:nth-child(4) .feature-icon { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+    .feature-card:nth-child(5) .feature-icon { background: rgba(236, 72, 153, 0.1); color: #ec4899; }
+    .feature-card:nth-child(6) .feature-icon { background: rgba(6, 182, 212, 0.1); color: #06b6d4; }
+
+    .feature-card h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+
+    .feature-card p {
+      font-size: 0.92rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+
+    /* ── Preview / Mockup ───────────────────────────────────────── */
+    .preview {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preview .bg-glow {
+      width: 500px; height: 500px;
+      background: var(--accent);
+      opacity: 0.06;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .mockup-container {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .browser-frame {
+      background: #111125;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.05),
+        0 25px 80px rgba(0, 0, 0, 0.5),
+        0 0 120px var(--accent-glow);
+    }
+
+    .browser-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .browser-dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .browser-dots span {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+    }
+
+    .browser-dots span:nth-child(1) { background: #ff5f57; }
+    .browser-dots span:nth-child(2) { background: #ffbd2e; }
+    .browser-dots span:nth-child(3) { background: #28c840; }
+
+    .browser-url {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    .browser-content {
+      padding: 24px;
+      min-height: 420px;
+      position: relative;
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(92, 92, 255, 0.05) 0%, transparent 60%),
+        var(--bg-deep);
+    }
+
+    /* Dashboard Mockup */
+    .mock-dashboard {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 20px;
+      height: 100%;
+    }
+
+    .mock-sidebar {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 16px;
+    }
+
+    .mock-sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mock-sidebar-logo {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      border-radius: 7px;
+    }
+
+    .mock-sidebar-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .mock-nav-items {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .mock-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+
+    .mock-nav-item.active {
+      background: rgba(92, 92, 255, 0.12);
+      color: var(--accent-light);
+    }
+
+    .mock-nav-icon {
+      width: 16px; height: 16px;
+      border-radius: 4px;
+      background: currentColor;
+      opacity: 0.4;
+    }
+
+    .mock-nav-item.active .mock-nav-icon { opacity: 0.8; }
+
+    .mock-main {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .mock-search {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mock-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .mock-service-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 16px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .mock-service-card:hover {
+      border-color: var(--border-hover);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .mock-service-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      margin: 0 auto 12px;
+    }
+
+    .mock-service-name {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .mock-service-desc {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+
+    .mock-card-1 .mock-service-icon { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .mock-card-2 .mock-service-icon { background: linear-gradient(135deg, #22c55e, #16a34a); }
+    .mock-card-3 .mock-service-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .mock-card-4 .mock-service-icon { background: linear-gradient(135deg, #ec4899, #db2777); }
+    .mock-card-5 .mock-service-icon { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .mock-card-6 .mock-service-icon { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+
+    /* ── Tech Stack ─────────────────────────────────────────────── */
+    .tech-stack {
+      background: var(--bg-primary);
+    }
+
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .tech-card {
+      text-align: center;
+      padding: 40px 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: all 0.3s ease;
+    }
+
+    .tech-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+    }
+
+    .tech-logo {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 20px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: 800;
+    }
+
+    .tech-card:nth-child(1) .tech-logo {
+      background: rgba(239, 108, 0, 0.12);
+      color: #f97316;
+    }
+
+    .tech-card:nth-child(2) .tech-logo {
+      background: rgba(59, 130, 246, 0.12);
+      color: #3b82f6;
+    }
+
+    .tech-card:nth-child(3) .tech-logo {
+      background: rgba(250, 204, 21, 0.12);
+      color: #facc15;
+    }
+
+    .tech-card h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .tech-card p {
+      font-size: 0.88rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    .tech-highlights {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 48px;
+      flex-wrap: wrap;
+    }
+
+    .tech-highlight {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.95rem;
+      color: var(--text-dim);
+    }
+
+    .tech-highlight i { color: #22c55e; }
+
+    /* ── Getting Started ────────────────────────────────────────── */
+    .getting-started {
+      position: relative;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .step {
+      text-align: center;
+      position: relative;
+      padding: 40px 24px;
+    }
+
+    .step-number {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: white;
+      margin: 0 auto 24px;
+      box-shadow: 0 8px 32px var(--accent-glow);
+    }
+
+    .step h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .step p {
+      font-size: 0.92rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+
+    .code-block {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 20px 24px;
+      margin-top: 48px;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      overflow-x: auto;
+      position: relative;
+    }
+
+    .code-block .prompt { color: #22c55e; }
+    .code-block .command { color: var(--text); }
+    .code-block .comment { color: var(--text-muted); }
+
+    .code-line {
+      display: block;
+      padding: 3px 0;
+    }
+
+    /* ── Languages ──────────────────────────────────────────────── */
+    .languages-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      margin-top: 48px;
+      flex-wrap: wrap;
+    }
+
+    .lang-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      padding: 8px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      transition: all 0.2s;
+    }
+
+    .lang-item:hover {
+      border-color: var(--border-hover);
+      color: var(--text);
+    }
+
+    .lang-flag {
+      font-size: 1.2rem;
+    }
+
+    /* ── CTA Section ────────────────────────────────────────────── */
+    .cta-section {
+      background: var(--bg-primary);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-section .bg-glow {
+      width: 600px; height: 300px;
+      background: var(--accent);
+      opacity: 0.06;
+      bottom: -100px; left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .cta-box {
+      position: relative;
+      z-index: 1;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 64px 40px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      backdrop-filter: blur(10px);
+    }
+
+    .cta-box h2 {
+      font-size: clamp(1.8rem, 3.5vw, 2.25rem);
+      font-weight: 800;
+      margin-bottom: 16px;
+      letter-spacing: -0.02em;
+    }
+
+    .cta-box p {
+      color: var(--text-dim);
+      font-size: 1.05rem;
+      margin-bottom: 32px;
+    }
+
+    .cta-buttons {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────────── */
+    .footer {
+      padding: 48px 0;
+      border-top: 1px solid var(--border);
+      background: var(--bg-deep);
+    }
+
+    .footer .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .footer-brand .brand-icon {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
+    .footer-sep {
+      width: 1px;
+      height: 20px;
+      background: var(--border);
+    }
+
+    .footer-copy {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .footer-links a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .footer-links a:hover { color: var(--text); }
+
+    /* ── Responsive ─────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .tech-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+      .steps { grid-template-columns: 1fr; gap: 24px; max-width: 400px; }
+      .mock-dashboard { grid-template-columns: 1fr; }
+      .mock-sidebar { display: none; }
+      .mock-cards-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero-stats { gap: 32px; }
+    }
+
+    @media (max-width: 640px) {
+      section { padding: 64px 0; }
+      .features-grid { grid-template-columns: 1fr; }
+      .tech-grid { grid-template-columns: 1fr; max-width: 300px; }
+      .nav-links { display: none; }
+      .mobile-toggle { display: block; }
+      .hero-stats { flex-direction: column; gap: 20px; }
+      .hero-buttons { flex-direction: column; align-items: stretch; }
+      .hero-buttons .btn { justify-content: center; }
+      .footer .container { flex-direction: column; text-align: center; }
+      .footer-left { flex-direction: column; }
+      .footer-sep { display: none; }
+      .cta-box { padding: 40px 24px; }
+      .cta-buttons { flex-direction: column; align-items: stretch; }
+      .cta-buttons .btn { justify-content: center; }
+      .tech-highlights { flex-direction: column; align-items: center; gap: 16px; }
+      .mock-cards-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ── Mobile Nav ─────────────────────────────────────────────── */
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      top: 65px;
+      left: 0;
+      right: 0;
+      background: rgba(6, 6, 15, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 24px;
+      z-index: 99;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .mobile-nav.open { display: flex; }
+
+    .mobile-nav a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 1rem;
+      font-weight: 500;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      transition: color 0.2s;
+    }
+
+    .mobile-nav a:last-child { border-bottom: none; }
+    .mobile-nav a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+
+  <!-- ── Navbar ──────────────────────────────────────────────── -->
+  <nav class="navbar">
+    <div class="container">
+      <a href="#" class="nav-brand">
+        <span class="brand-icon"><i data-lucide="home" style="width:20px;height:20px"></i></span>
+        MaisonMaire
+      </a>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#preview">Preview</a></li>
+        <li><a href="#tech">Tech</a></li>
+        <li><a href="#start">Get Started</a></li>
+        <li><a href="https://github.com/Louisdelez/MaisonMaire" target="_blank" rel="noopener" class="nav-cta"><i data-lucide="github" style="width:16px;height:16px"></i> GitHub</a></li>
+      </ul>
+      <button class="mobile-toggle" onclick="document.querySelector('.mobile-nav').classList.toggle('open')" aria-label="Menu">
+        <i data-lucide="menu" style="width:24px;height:24px"></i>
+      </button>
+    </div>
+  </nav>
+
+  <div class="mobile-nav">
+    <a href="#features" onclick="this.parentElement.classList.remove('open')">Features</a>
+    <a href="#preview" onclick="this.parentElement.classList.remove('open')">Preview</a>
+    <a href="#tech" onclick="this.parentElement.classList.remove('open')">Tech</a>
+    <a href="#start" onclick="this.parentElement.classList.remove('open')">Get Started</a>
+    <a href="https://github.com/Louisdelez/MaisonMaire" target="_blank" rel="noopener">GitHub</a>
+  </div>
+
+  <!-- ── Hero ────────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="bg-glow glow-1"></div>
+    <div class="bg-glow glow-2"></div>
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-badge reveal">
+          <span class="badge-dot"></span>
+          Open Source &middot; Self-Hosted &middot; Zero Dependencies
+        </div>
+        <h1 class="reveal reveal-delay-1">
+          Your services,<br><span class="gradient-text">one dashboard.</span>
+        </h1>
+        <p class="reveal reveal-delay-2">
+          A modern, self-hosted hub to centralize all your services and projects in a single beautiful interface. No backend, no build step, no hassle.
+        </p>
+        <div class="hero-buttons reveal reveal-delay-3">
+          <a href="https://github.com/Louisdelez/MaisonMaire" target="_blank" rel="noopener" class="btn btn-primary">
+            <i data-lucide="github" style="width:20px;height:20px"></i> View on GitHub
+          </a>
+          <a href="https://github.com/Louisdelez/MaisonMaire#readme" target="_blank" rel="noopener" class="btn btn-secondary">
+            <i data-lucide="book-open" style="width:20px;height:20px"></i> Documentation
+          </a>
+        </div>
+        <div class="hero-stats reveal reveal-delay-4">
+          <div class="stat">
+            <div class="stat-value">0 deps</div>
+            <div class="stat-label">No dependencies</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">5</div>
+            <div class="stat-label">Languages</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">100%</div>
+            <div class="stat-label">Client-side</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features ────────────────────────────────────────────── -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-label"><i data-lucide="sparkles" style="width:16px;height:16px"></i> Features</div>
+        <h2>Everything you need,<br>nothing you don't</h2>
+        <p>Built with simplicity in mind. No frameworks, no build tools, no server required.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-icon"><i data-lucide="layout-dashboard" style="width:24px;height:24px"></i></div>
+          <h3>Service Dashboard</h3>
+          <p>Centralize all your self-hosted services, projects, and bookmarks in a modern responsive interface.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-icon"><i data-lucide="shield-check" style="width:24px;height:24px"></i></div>
+          <h3>Authentication</h3>
+          <p>Built-in login and registration system to keep your dashboard private and secure.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-3">
+          <div class="feature-icon"><i data-lucide="settings" style="width:24px;height:24px"></i></div>
+          <h3>Admin Panel</h3>
+          <p>Full CRUD operations with icon picker, color picker, and category management for your services.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-4">
+          <div class="feature-icon"><i data-lucide="sun-moon" style="width:24px;height:24px"></i></div>
+          <h3>Theme System</h3>
+          <p>Dark, Light, and System theme modes. Your dashboard adapts to your preference automatically.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-5">
+          <div class="feature-icon"><i data-lucide="languages" style="width:24px;height:24px"></i></div>
+          <h3>5 Languages</h3>
+          <p>Fully translated in French, English, German, Italian, and Spanish with beautiful SVG flag icons.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-icon"><i data-lucide="download" style="width:24px;height:24px"></i></div>
+          <h3>Export / Import</h3>
+          <p>Export your entire configuration as JSON and import it anywhere. Your data, your control.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Preview ─────────────────────────────────────────────── -->
+  <section class="preview" id="preview">
+    <div class="bg-glow"></div>
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-label"><i data-lucide="monitor" style="width:16px;height:16px"></i> Preview</div>
+        <h2>Clean, intuitive interface</h2>
+        <p>A dashboard that feels like home. Organize, search, and access all your services effortlessly.</p>
+      </div>
+      <div class="mockup-container reveal reveal-delay-1">
+        <div class="browser-frame">
+          <div class="browser-bar">
+            <div class="browser-dots">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="browser-url">localhost:8080 / MaisonMaire</div>
+          </div>
+          <div class="browser-content">
+            <div class="mock-dashboard">
+              <div class="mock-sidebar">
+                <div class="mock-sidebar-brand">
+                  <div class="mock-sidebar-logo"></div>
+                  <div class="mock-sidebar-title">MaisonMaire</div>
+                </div>
+                <div class="mock-nav-items">
+                  <div class="mock-nav-item active"><div class="mock-nav-icon"></div> Dashboard</div>
+                  <div class="mock-nav-item"><div class="mock-nav-icon"></div> Services</div>
+                  <div class="mock-nav-item"><div class="mock-nav-icon"></div> Categories</div>
+                  <div class="mock-nav-item"><div class="mock-nav-icon"></div> Settings</div>
+                  <div class="mock-nav-item"><div class="mock-nav-icon"></div> Admin</div>
+                </div>
+              </div>
+              <div class="mock-main">
+                <div class="mock-search">
+                  <i data-lucide="search" style="width:14px;height:14px;opacity:0.5"></i>
+                  Search services...
+                </div>
+                <div class="mock-cards-grid">
+                  <div class="mock-service-card mock-card-1">
+                    <div class="mock-service-icon"></div>
+                    <div class="mock-service-name">Nextcloud</div>
+                    <div class="mock-service-desc">Cloud Storage</div>
+                  </div>
+                  <div class="mock-service-card mock-card-2">
+                    <div class="mock-service-icon"></div>
+                    <div class="mock-service-name">Gitea</div>
+                    <div class="mock-service-desc">Git Hosting</div>
+                  </div>
+                  <div class="mock-service-card mock-card-3">
+                    <div class="mock-service-icon"></div>
+                    <div class="mock-service-name">Portainer</div>
+                    <div class="mock-service-desc">Docker Manager</div>
+                  </div>
+                  <div class="mock-service-card mock-card-4">
+                    <div class="mock-service-icon"></div>
+                    <div class="mock-service-name">Grafana</div>
+                    <div class="mock-service-desc">Monitoring</div>
+                  </div>
+                  <div class="mock-service-card mock-card-5">
+                    <div class="mock-service-icon"></div>
+                    <div class="mock-service-name">Jellyfin</div>
+                    <div class="mock-service-desc">Media Server</div>
+                  </div>
+                  <div class="mock-service-card mock-card-6">
+                    <div class="mock-service-icon"></div>
+                    <div class="mock-service-name">Pi-hole</div>
+                    <div class="mock-service-desc">DNS Filtering</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Language support -->
+      <div class="languages-bar reveal reveal-delay-2">
+        <div class="lang-item"><span class="lang-flag">🇫🇷</span> Francais</div>
+        <div class="lang-item"><span class="lang-flag">🇬🇧</span> English</div>
+        <div class="lang-item"><span class="lang-flag">🇩🇪</span> Deutsch</div>
+        <div class="lang-item"><span class="lang-flag">🇮🇹</span> Italiano</div>
+        <div class="lang-item"><span class="lang-flag">🇪🇸</span> Espanol</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Tech Stack ──────────────────────────────────────────── -->
+  <section class="tech-stack" id="tech">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-label"><i data-lucide="cpu" style="width:16px;height:16px"></i> Tech Stack</div>
+        <h2>Pure web, zero bloat</h2>
+        <p>No frameworks, no transpilers, no package managers. Just the web platform.</p>
+      </div>
+      <div class="tech-grid">
+        <div class="tech-card reveal reveal-delay-1">
+          <div class="tech-logo">&lt;/&gt;</div>
+          <h3>HTML5</h3>
+          <p>Semantic markup, accessible structure</p>
+        </div>
+        <div class="tech-card reveal reveal-delay-2">
+          <div class="tech-logo">{ }</div>
+          <h3>CSS3</h3>
+          <p>Modern layouts, custom properties, animations</p>
+        </div>
+        <div class="tech-card reveal reveal-delay-3">
+          <div class="tech-logo">JS</div>
+          <h3>Vanilla JS</h3>
+          <p>No frameworks, no build step needed</p>
+        </div>
+      </div>
+      <div class="tech-highlights reveal reveal-delay-2">
+        <div class="tech-highlight"><i data-lucide="check-circle" style="width:18px;height:18px"></i> No build step</div>
+        <div class="tech-highlight"><i data-lucide="check-circle" style="width:18px;height:18px"></i> No backend required</div>
+        <div class="tech-highlight"><i data-lucide="check-circle" style="width:18px;height:18px"></i> localStorage only</div>
+        <div class="tech-highlight"><i data-lucide="check-circle" style="width:18px;height:18px"></i> Lucide icons</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Getting Started ─────────────────────────────────────── -->
+  <section class="getting-started" id="start">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-label"><i data-lucide="rocket" style="width:16px;height:16px"></i> Getting Started</div>
+        <h2>Up and running in seconds</h2>
+        <p>Clone the repo, open the file, and you're done. It's that simple.</p>
+      </div>
+      <div class="steps">
+        <div class="step reveal reveal-delay-1">
+          <div class="step-number">1</div>
+          <h3>Clone</h3>
+          <p>Clone the repository from GitHub to your local machine or server.</p>
+        </div>
+        <div class="step reveal reveal-delay-2">
+          <div class="step-number">2</div>
+          <h3>Open</h3>
+          <p>Open <code>index.html</code> in your browser. No server setup needed.</p>
+        </div>
+        <div class="step reveal reveal-delay-3">
+          <div class="step-number">3</div>
+          <h3>Customize</h3>
+          <p>Add your services, pick your theme and language, and make it yours.</p>
+        </div>
+      </div>
+      <div class="code-block reveal reveal-delay-2">
+        <span class="code-line"><span class="comment"># Clone the repository</span></span>
+        <span class="code-line"><span class="prompt">$</span> <span class="command">git clone https://github.com/Louisdelez/MaisonMaire.git</span></span>
+        <span class="code-line">&nbsp;</span>
+        <span class="code-line"><span class="comment"># Open in your browser</span></span>
+        <span class="code-line"><span class="prompt">$</span> <span class="command">cd MaisonMaire && open index.html</span></span>
+        <span class="code-line">&nbsp;</span>
+        <span class="code-line"><span class="comment"># Or serve it (optional)</span></span>
+        <span class="code-line"><span class="prompt">$</span> <span class="command">python3 -m http.server 8080</span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ─────────────────────────────────────────────────── -->
+  <section class="cta-section">
+    <div class="bg-glow"></div>
+    <div class="container">
+      <div class="cta-box reveal">
+        <h2>Ready to organize<br>your homelab?</h2>
+        <p>MaisonMaire is free, open source, and always will be.</p>
+        <div class="cta-buttons">
+          <a href="https://github.com/Louisdelez/MaisonMaire" target="_blank" rel="noopener" class="btn btn-primary">
+            <i data-lucide="github" style="width:20px;height:20px"></i> Get Started
+          </a>
+          <a href="https://github.com/Louisdelez/MaisonMaire/stargazers" target="_blank" rel="noopener" class="btn btn-secondary">
+            <i data-lucide="star" style="width:20px;height:20px"></i> Star on GitHub
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ──────────────────────────────────────────────── -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-left">
+        <a href="#" class="footer-brand">
+          <span class="brand-icon"><i data-lucide="home" style="width:14px;height:14px"></i></span>
+          MaisonMaire
+        </a>
+        <div class="footer-sep"></div>
+        <span class="footer-copy">MIT License &middot; Made with care</span>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/Louisdelez/MaisonMaire" target="_blank" rel="noopener">
+          <i data-lucide="github" style="width:16px;height:16px"></i> GitHub
+        </a>
+        <a href="https://github.com/Louisdelez/MaisonMaire/blob/main/LICENSE" target="_blank" rel="noopener">
+          <i data-lucide="scale" style="width:16px;height:16px"></i> License
+        </a>
+        <a href="https://github.com/Louisdelez/MaisonMaire/issues" target="_blank" rel="noopener">
+          <i data-lucide="message-circle" style="width:16px;height:16px"></i> Issues
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ── Scripts ─────────────────────────────────────────────── -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Scroll reveal with IntersectionObserver
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, {
+      threshold: 0.1,
+      rootMargin: '0px 0px -40px 0px'
+    });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // Navbar scroll effect
+    let lastScroll = 0;
+    window.addEventListener('scroll', () => {
+      const navbar = document.querySelector('.navbar');
+      const scrollTop = window.scrollY;
+      if (scrollTop > 100) {
+        navbar.style.padding = '10px 0';
+        navbar.style.background = 'rgba(6, 6, 15, 0.92)';
+      } else {
+        navbar.style.padding = '16px 0';
+        navbar.style.background = 'rgba(6, 6, 15, 0.8)';
+      }
+      lastScroll = scrollTop;
+    });
+  </script>
+</body>
+</html>
